@@ -63,6 +63,7 @@ import org.slf4j.LoggerFactory;
 public class DefaultEurekaServerConfig implements EurekaServerConfig {
     private static final String ARCHAIUS_DEPLOYMENT_ENVIRONMENT = "archaius.deployment.environment";
     private static final String TEST = "test";
+    // 用于区分不同环境的 eureka-server-environment.properties
     private static final String EUREKA_ENVIRONMENT = "eureka.environment";
     private static final Logger logger = LoggerFactory
             .getLogger(DefaultEurekaServerConfig.class);
@@ -95,7 +96,8 @@ public class DefaultEurekaServerConfig implements EurekaServerConfig {
     public DefaultEurekaServerConfig(String namespace) {
         this.namespace = namespace;
         init();
-    }
+
+}
 
     private void init() {
         String env = ConfigurationManager.getConfigInstance().getString(
@@ -107,6 +109,9 @@ public class DefaultEurekaServerConfig implements EurekaServerConfig {
         try {
             // ConfigurationManager
             // .loadPropertiesFromResources(eurekaPropsFile);
+            // 如果未指定eureka.server.props值，
+            // 则加载 eureka-server-{environment}.properties.
+            // 如果能从eureka-server-{environment}.properties中加载，就使用， 否则就用eureka-server.properties
             ConfigurationManager
                     .loadCascadedPropertiesFromResources(eurekaPropsFile);
         } catch (IOException e) {
@@ -116,7 +121,6 @@ public class DefaultEurekaServerConfig implements EurekaServerConfig {
                     eurekaPropsFile);
         }
     }
-
     /*
      * (non-Javadoc)
      *

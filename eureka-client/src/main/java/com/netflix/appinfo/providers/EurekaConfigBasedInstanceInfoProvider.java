@@ -44,6 +44,7 @@ public class EurekaConfigBasedInstanceInfoProvider implements Provider<InstanceI
 
     @Override
     public synchronized InstanceInfo get() {
+        // 根据配置中心，创建一个自己的实例信息（InstanceInfo）
         if (instanceInfo == null) {
             // Build the lease information to be passed to the server based on config
             LeaseInfo.Builder leaseInfoBuilder = LeaseInfo.Builder.newBuilder()
@@ -55,6 +56,7 @@ public class EurekaConfigBasedInstanceInfoProvider implements Provider<InstanceI
             }
 
             // Builder the instance information to be registered with eureka server
+            // 使用Build模式构建 InstanceInfo.
             InstanceInfo.Builder builder = InstanceInfo.Builder.newBuilder(vipAddressResolver);
 
             // set the appropriate id for the InstanceInfo, falling back to datacenter Id if applicable, else hostname
@@ -80,7 +82,7 @@ public class EurekaConfigBasedInstanceInfoProvider implements Provider<InstanceI
             if (defaultAddress == null || defaultAddress.isEmpty()) {
                 defaultAddress = config.getIpAddress();
             }
-
+            // 设置 InstanceInfo 值
             builder.setNamespace(config.getNamespace())
                     .setInstanceId(instanceId)
                     .setAppName(config.getAppname())
