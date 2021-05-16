@@ -414,7 +414,8 @@ public class DiscoveryClient implements EurekaClient {
             throw new RuntimeException("Failed to initialize DiscoveryClient!", e);
         }
 
-        if (clientConfig.shouldFetchRegistry() && !fetchRegistry(false)) {  // 需要拉取注册表信息，但是没有拉取成功
+        // 需要拉取注册表信息，如果没有成功， 从备用的注册表地址中拉取
+        if (clientConfig.shouldFetchRegistry() && !fetchRegistry(false)) {
             fetchRegistryFromBackup();
         }
 
@@ -1309,7 +1310,7 @@ public class DiscoveryClient implements EurekaClient {
             if (clientConfig.shouldOnDemandUpdateStatusChange()) {
                 applicationInfoManager.registerStatusChangeListener(statusChangeListener);
             }
-
+            // 启动 实例复制器
             instanceInfoReplicator.start(clientConfig.getInitialInstanceInfoReplicationIntervalSeconds());
         } else {
             logger.info("Not registering with Eureka server per configuration");
@@ -1376,6 +1377,8 @@ public class DiscoveryClient implements EurekaClient {
     /**
      * Refresh the current local instanceInfo. Note that after a valid refresh where changes are observed, the
      * isDirty flag on the instanceInfo is set to true
+     *
+     * 刷新instanceInfo， 如果发现了变化， isDirty标记将会设置为true
      */
     void refreshInstanceInfo() {
         applicationInfoManager.refreshDataCenterInfoIfRequired();

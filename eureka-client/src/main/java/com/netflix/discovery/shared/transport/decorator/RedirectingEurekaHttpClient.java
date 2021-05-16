@@ -124,7 +124,7 @@ public class RedirectingEurekaHttpClient extends EurekaHttpClientDecorator {
                 }
                 return httpResponse;
             }
-
+            // 解决请求重定向问题， v2 后面的路径不要
             targetUrl = getRedirectBaseUri(httpResponse.getLocation());
             if (targetUrl == null) {
                 throw new TransportException("Invalid redirect URL " + httpResponse.getLocation());

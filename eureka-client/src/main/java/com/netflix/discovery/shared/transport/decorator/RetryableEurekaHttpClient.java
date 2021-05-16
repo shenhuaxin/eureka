@@ -97,6 +97,7 @@ public class RetryableEurekaHttpClient extends EurekaHttpClientDecorator {
     protected <R> EurekaHttpResponse<R> execute(RequestExecutor<R> requestExecutor) {
         List<EurekaEndpoint> candidateHosts = null;
         int endpointIdx = 0;
+        // 重试次数
         for (int retry = 0; retry < numberOfRetries; retry++) {
             EurekaHttpClient currentHttpClient = delegate.get();
             EurekaEndpoint currentEndpoint = null;
@@ -117,6 +118,7 @@ public class RetryableEurekaHttpClient extends EurekaHttpClientDecorator {
 
             try {
                 EurekaHttpResponse<R> response = requestExecutor.execute(currentHttpClient);
+                // 没有成功，继续重试
                 if (serverStatusEvaluator.accept(response.getStatusCode(), requestExecutor.getRequestType())) {
                     delegate.set(currentHttpClient);
                     if (retry > 0) {
