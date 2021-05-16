@@ -945,10 +945,13 @@ public class DiscoveryClient implements EurekaClient {
                 logger.info("Registered Applications size is zero : {}",
                         (applications.getRegisteredApplications().size() == 0));
                 logger.info("Application version is -1: {}", (applications.getVersion() == -1));
+                // 拉取全量注册表
                 getAndStoreFullRegistry();
             } else {
+                // 增量更新
                 getAndUpdateDelta(applications);
             }
+            // 设置一致性hash值
             applications.setAppsHashCode(applications.getReconcileHashCode());
             logTotalInstances();
         } catch (Throwable e) {

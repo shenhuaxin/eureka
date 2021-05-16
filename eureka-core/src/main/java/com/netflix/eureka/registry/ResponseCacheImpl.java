@@ -123,6 +123,7 @@ public class ResponseCacheImpl implements ResponseCache {
     ResponseCacheImpl(EurekaServerConfig serverConfig, ServerCodecs serverCodecs, AbstractInstanceRegistry registry) {
         this.serverConfig = serverConfig;
         this.serverCodecs = serverCodecs;
+        // eureka.server.shouldUseReadOnlyResponseCache 进行配置
         this.shouldUseReadOnlyResponseCache = serverConfig.shouldUseReadOnlyResponseCache();
         this.registry = registry;
 
@@ -204,6 +205,7 @@ public class ResponseCacheImpl implements ResponseCache {
      * @return payload which contains information about the applications.
      */
     public String get(final Key key) {
+        // 是否使用只读缓存， 默认使用
         return get(key, shouldUseReadOnlyResponseCache);
     }
 
@@ -345,14 +347,18 @@ public class ResponseCacheImpl implements ResponseCache {
         Value payload = null;
         try {
             if (useReadOnlyCache) {
+                // 如果可以使用只读缓存，从只读缓存中获取
                 final Value currentPayload = readOnlyCacheMap.get(key);
                 if (currentPayload != null) {
                     payload = currentPayload;
                 } else {
+                    // 只读缓存中获取不到，从读写缓存中获取，并放入只读缓存中
+                    // 如果读写缓存中也没有， 那么会从registry中去load. 见 this.readWriteCacheMap 的 build实例化
                     payload = readWriteCacheMap.get(key);
                     readOnlyCacheMap.put(key, payload);
                 }
             } else {
+                // 从读写缓存中拉取
                 payload = readWriteCacheMap.get(key);
             }
         } catch (Throwable t) {
