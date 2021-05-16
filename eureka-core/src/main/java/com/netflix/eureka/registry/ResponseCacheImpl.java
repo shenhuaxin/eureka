@@ -130,6 +130,8 @@ public class ResponseCacheImpl implements ResponseCache {
         long responseCacheUpdateIntervalMs = serverConfig.getResponseCacheUpdateIntervalMs();
         this.readWriteCacheMap =
                 CacheBuilder.newBuilder().initialCapacity(1000)
+                        // 定时过期 eureka.server.responseCacheAutoExpirationInSeconds ， 默认180s
+                        // 写入到缓存中的对象， 180s后定时过期
                         .expireAfterWrite(serverConfig.getResponseCacheAutoExpirationInSeconds(), TimeUnit.SECONDS)
                         .removalListener(new RemovalListener<Key, Value>() {
                             @Override
@@ -154,6 +156,7 @@ public class ResponseCacheImpl implements ResponseCache {
                         });
 
         if (shouldUseReadOnlyResponseCache) {
+            // 定时调度，默认30秒从 readwriteMap 中同步数据到 readOnlyMap 中
             timer.schedule(getCacheUpdateTask(),
                     new Date(((System.currentTimeMillis() / responseCacheUpdateIntervalMs) * responseCacheUpdateIntervalMs)
                             + responseCacheUpdateIntervalMs),

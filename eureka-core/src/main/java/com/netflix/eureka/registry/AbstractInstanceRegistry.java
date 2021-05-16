@@ -273,6 +273,8 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
             registrant.setActionType(ActionType.ADDED);
             recentlyChangedQueue.add(new RecentlyChangedItem(lease));
             registrant.setLastUpdatedTimestamp();
+
+            // 主动过期掉 readwriteMap中 对应的 服务的信息 和 ALL_APPS
             invalidateCache(registrant.getAppName(), registrant.getVIPAddress(), registrant.getSecureVipAddress());
             logger.info("Registered instance {}/{} with status {} (replication={})",
                     registrant.getAppName(), registrant.getId(), registrant.getStatus(), isReplication);
