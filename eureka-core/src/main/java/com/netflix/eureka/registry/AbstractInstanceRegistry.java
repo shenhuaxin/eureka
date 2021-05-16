@@ -192,6 +192,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
     public void register(InstanceInfo registrant, int leaseDuration, boolean isReplication) {
         try {
             read.lock();
+            // 通过服务名称拿到服务的实例Map
             Map<String, Lease<InstanceInfo>> gMap = registry.get(registrant.getAppName());
             REGISTER.increment(isReplication);
             if (gMap == null) {
@@ -223,18 +224,24 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
                         // Since the client wants to cancel it, reduce the threshold
                         // (1
                         // for 30 seconds, 2 for a minute)
+                        // 每个心跳间隔为30秒， 那么期望的每分钟心跳数需要加2
                         this.expectedNumberOfRenewsPerMin = this.expectedNumberOfRenewsPerMin + 2;
+                        // 每分钟心跳数 * 阈值
                         this.numberOfRenewsPerMinThreshold =
                                 (int) (this.expectedNumberOfRenewsPerMin * serverConfig.getRenewalPercentThreshold());
                     }
                 }
                 logger.debug("No previous lease information found; it is new registration");
             }
+
             Lease<InstanceInfo> lease = new Lease<InstanceInfo>(registrant, leaseDuration);
             if (existingLease != null) {
+                // 如果之前注册过， 使用旧的服务启动时间
                 lease.setServiceUpTimestamp(existingLease.getServiceUpTimestamp());
             }
+            // 加入到服务注册表中
             gMap.put(registrant.getId(), lease);
+            // 保存最近注册服务的队列
             synchronized (recentRegisteredQueue) {
                 recentRegisteredQueue.add(new Pair<Long, String>(
                         System.currentTimeMillis(),

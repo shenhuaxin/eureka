@@ -91,6 +91,7 @@ public class ApplicationsResource {
             @PathParam("version") String version,
             @PathParam("appId") String appId) {
         CurrentRequestVersion.set(Version.toEnum(version));
+        // 没有加资源指示器， 是一个子资源定位器
         return new ApplicationResource(appId, serverConfig, registry);
     }
 
