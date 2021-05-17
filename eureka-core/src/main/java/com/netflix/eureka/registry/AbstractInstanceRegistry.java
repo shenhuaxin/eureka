@@ -314,6 +314,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
             Map<String, Lease<InstanceInfo>> gMap = registry.get(appName);
             Lease<InstanceInfo> leaseToCancel = null;
             if (gMap != null) {
+                // 从registry注册表中移除
                 leaseToCancel = gMap.remove(id);
             }
             synchronized (recentCanceledQueue) {
@@ -328,17 +329,21 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
                 logger.warn("DS: Registry: cancel failed because Lease is not registered for: {}/{}", appName, id);
                 return false;
             } else {
+                // 保存服务下线的时间戳
                 leaseToCancel.cancel();
                 InstanceInfo instanceInfo = leaseToCancel.getHolder();
                 String vip = null;
                 String svip = null;
                 if (instanceInfo != null) {
+                    // 将服务实例设置为 删除
                     instanceInfo.setActionType(ActionType.DELETED);
+                    // 加入到最近改变的队列
                     recentlyChangedQueue.add(new RecentlyChangedItem(leaseToCancel));
                     instanceInfo.setLastUpdatedTimestamp();
                     vip = instanceInfo.getVIPAddress();
                     svip = instanceInfo.getSecureVipAddress();
                 }
+                // 将 ALL_APPS , ALL_APPS_DELTA , appName 的缓存清理掉
                 invalidateCache(appName, vip, svip);
                 logger.info("Cancelled instance {}/{} (replication={})", appName, id, isReplication);
                 return true;
@@ -1332,12 +1337,14 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
     }
 
     private TimerTask getDeltaRetentionTask() {
+        // 30秒执行一次
         return new TimerTask() {
 
             @Override
             public void run() {
                 Iterator<RecentlyChangedItem> it = recentlyChangedQueue.iterator();
                 while (it.hasNext()) {
+                    // 只保存最近3分钟改变的服务实例
                     if (it.next().getLastUpdateTime() <
                             System.currentTimeMillis() - serverConfig.getRetentionTimeInMSInDeltaQueue()) {
                         it.remove();
