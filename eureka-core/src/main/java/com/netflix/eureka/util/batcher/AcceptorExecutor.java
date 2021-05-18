@@ -189,8 +189,10 @@ class AcceptorExecutor<ID, T> {
 
                     long now = System.currentTimeMillis();
                     if (scheduleTime < now) {
+                        // 你之前失败过， 需要加上失败重试时间，
                         scheduleTime = now + trafficShaper.transmissionDelay();
                     }
+                    // 如果当前时间 大于 下次调度时间， 先不进行批任务处理
                     if (scheduleTime <= now) {
                         assignBatchWork();
                         assignSingleItemWork();
@@ -216,7 +218,9 @@ class AcceptorExecutor<ID, T> {
 
         private void drainInputQueues() throws InterruptedException {
             do {
+                // 处理 reprocessor 队列中的数据
                 drainReprocessQueue();
+                // 处理 acceptor 队列中的数据
                 drainAcceptorQueue();
 
                 if (!isShutdown.get()) {
@@ -257,6 +261,10 @@ class AcceptorExecutor<ID, T> {
             }
         }
 
+        /**
+         *
+         * @param taskHolder
+         */
         private void appendTaskHolder(TaskHolder<ID, T> taskHolder) {
             if (isFull()) {
                 pendingTasks.remove(processingOrder.poll());
@@ -289,9 +297,11 @@ class AcceptorExecutor<ID, T> {
         }
 
         void assignBatchWork() {
+            // 判断时间和任务数量 是否足够
             if (hasEnoughTasksForNextBatch()) {
                 if (batchWorkRequests.tryAcquire(1)) {
                     long now = System.currentTimeMillis();
+                    // 本次批任务处理， 最大能放入多少个任务
                     int len = Math.min(maxBatchingSize, processingOrder.size());
                     List<TaskHolder<ID, T>> holders = new ArrayList<>(len);
                     while (holders.size() < len && !processingOrder.isEmpty()) {
