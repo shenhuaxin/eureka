@@ -599,6 +599,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
     public void evict(long additionalLeaseMs) {
         logger.debug("Running the evict task");
 
+        // 是否允许主动删除掉故障的服务实例。 和自我保护有关
         if (!isLeaseExpirationEnabled()) {
             logger.debug("DS: lease expiration is currently disabled.");
             return;
@@ -613,6 +614,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
             if (leaseMap != null) {
                 for (Entry<String, Lease<InstanceInfo>> leaseEntry : leaseMap.entrySet()) {
                     Lease<InstanceInfo> lease = leaseEntry.getValue();
+                    // 判断是否过期
                     if (lease.isExpired(additionalLeaseMs) && lease.getHolder() != null) {
                         expiredLeases.add(lease);
                     }
@@ -624,8 +626,9 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
         // triggering self-preservation. Without that we would wipe out full registry.
         int registrySize = (int) getLocalRegistrySize();
         int registrySizeThreshold = (int) (registrySize * serverConfig.getRenewalPercentThreshold());
+        // 每次最多摘除实例的数量
         int evictionLimit = registrySize - registrySizeThreshold;
-
+        // 本次真正需要摘除的数量
         int toEvict = Math.min(expiredLeases.size(), evictionLimit);
         if (toEvict > 0) {
             logger.info("Evicting {} items (expired={}, evictionLimit={})", toEvict, expiredLeases.size(), evictionLimit);
@@ -633,6 +636,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
             Random random = new Random(System.currentTimeMillis());
             for (int i = 0; i < toEvict; i++) {
                 // Pick a random item (Knuth shuffle algorithm)
+                // 随机选择几个进行摘除
                 int next = i + random.nextInt(expiredLeases.size() - i);
                 Collections.swap(expiredLeases, i, next);
                 Lease<InstanceInfo> lease = expiredLeases.get(i);
@@ -641,6 +645,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
                 String id = lease.getHolder().getId();
                 EXPIRED.increment();
                 logger.warn("DS: Registry: expired lease for {}/{}", appName, id);
+                // 从注册表中摘除， 加入最近变化队列
                 internalCancel(appName, id, false);
             }
         }
@@ -1280,6 +1285,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
          * according to the configured cycle.
          */
         long getCompensationTimeMs() {
+            // 获取当前时间
             long currNanos = getCurrentTimeNano();
             long lastNanos = lastExecutionNanosRef.getAndSet(currNanos);
             if (lastNanos == 0l) {
@@ -1288,6 +1294,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
 
             long elapsedMs = TimeUnit.NANOSECONDS.toMillis(currNanos - lastNanos);
             long compensationTime = elapsedMs - serverConfig.getEvictionIntervalTimerInMs();
+            // 返回比应该执行的时间晚了多久
             return compensationTime <= 0l ? 0l : compensationTime;
         }
 

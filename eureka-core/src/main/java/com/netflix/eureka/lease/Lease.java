@@ -101,13 +101,16 @@ public class Lease<T> {
      * Checks if the lease of a given {@link com.netflix.appinfo.InstanceInfo} has expired or not.
      *
      * Note that due to renew() doing the 'wrong" thing and setting lastUpdateTimestamp to +duration more than
-     * what it should be, the expiry will actually be 2 * duration. This is a minor bug and should only affect
+     * what it should be, the expiry will actually be
+     * 2 * duration.
+     * This is a minor bug and should only affect
      * instances that ungracefully shutdown. Due to possible wide ranging impact to existing usage, this will
      * not be fixed.
      *
      * @param additionalLeaseMs any additional lease time to add to the lease evaluation in ms.
      */
     public boolean isExpired(long additionalLeaseMs) {
+        // additionalLeaseMs 应用暂停的时间
         return (evictionTimestamp > 0 || System.currentTimeMillis() > (lastUpdateTimestamp + duration + additionalLeaseMs));
     }
 
