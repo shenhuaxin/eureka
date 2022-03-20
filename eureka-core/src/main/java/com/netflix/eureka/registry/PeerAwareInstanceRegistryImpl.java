@@ -147,9 +147,11 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
 
     @Override
     public void init(PeerEurekaNodes peerEurekaNodes) throws Exception {
+        // 开启，60s进行一次统计
         this.numberOfReplicationsLastMin.start();
         this.peerEurekaNodes = peerEurekaNodes;
         initializedResponseCache();
+        // 开启15分钟一次的心跳阈值进行一次更新
         scheduleRenewalThresholdUpdateTask();
         initRemoteRegionRegistry();
 
@@ -535,6 +537,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
                 // current expected threshold of if the self preservation is disabled.
                 if ((count * 2) > (serverConfig.getRenewalPercentThreshold() * numberOfRenewsPerMinThreshold)
                         || (!this.isSelfPreservationModeEnabled())) {
+                    // 这里乘2 是因为客户端30秒进行一次心跳
                     this.expectedNumberOfRenewsPerMin = count * 2;
                     this.numberOfRenewsPerMinThreshold = (int) ((count * 2) * serverConfig.getRenewalPercentThreshold());
                 }

@@ -378,7 +378,7 @@ public class DiscoveryClient implements EurekaClient {
                             .setNameFormat("DiscoveryClient-%d")
                             .setDaemon(true)
                             .build());
-            // 支持心跳的线程池
+            // 支持心跳的调度器
             heartbeatExecutor = new ThreadPoolExecutor(
                     1, clientConfig.getHeartbeatExecutorThreadPoolSize(), 0, TimeUnit.SECONDS,
                     new SynchronousQueue<Runnable>(),
@@ -387,7 +387,7 @@ public class DiscoveryClient implements EurekaClient {
                             .setDaemon(true)
                             .build()
             );  // use direct handoff
-            // 支持缓存刷新的线程池
+            // 支持缓存刷新的调度器
             cacheRefreshExecutor = new ThreadPoolExecutor(
                     1, clientConfig.getCacheRefreshExecutorThreadPoolSize(), 0, TimeUnit.SECONDS,
                     new SynchronousQueue<Runnable>(),
@@ -397,7 +397,7 @@ public class DiscoveryClient implements EurekaClient {
                             .build()
             );  // use direct handoff
 
-            // EurekaTransport
+            // EurekaTransport, 初始化eureka网络传输器
             eurekaTransport = new EurekaTransport();
             scheduleServerEndpointTask(eurekaTransport, args);
 

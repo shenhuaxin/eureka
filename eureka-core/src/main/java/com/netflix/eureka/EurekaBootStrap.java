@@ -171,7 +171,7 @@ public class EurekaBootStrap implements ServletContextListener {
             // 基于instanceConfig创建InstanceInfo, 根据instanceConfig和InstanceInfo创建ApplicationInfoManager
             applicationInfoManager = new ApplicationInfoManager(
                     instanceConfig, new EurekaConfigBasedInstanceInfoProvider(instanceConfig).get());
-            
+            // 这里读取的也是 eureka-client.properties
             EurekaClientConfig eurekaClientConfig = new DefaultEurekaClientConfig();
             // 创建EurekaClient
             eurekaClient = new DiscoveryClient(applicationInfoManager, eurekaClientConfig);
@@ -222,8 +222,9 @@ public class EurekaBootStrap implements ServletContextListener {
         logger.info("Initialized server context");
 
         // Copy registry from neighboring eureka node
-        // 6. 从相邻的eureka server节点拷贝注册信息， 如果失败，再找下一个
+        // 6. 从相邻的eureka server节点拷贝注册信息， 如果失败，进行重试
         int registryCount = registry.syncUp();
+        // 重新设置心跳阈值，是因为在initialize时还没有获取到其他节点上的注册信息
         registry.openForTraffic(applicationInfoManager, registryCount);
 
         // Register all monitoring statistics.
